@@ -47,8 +47,8 @@ int main(){
     if(z==-1) bail("bind()");
 
     /* display all of our bound socket */
-
-    system("netstat -pa --unix");
+    //system("netstat -pa --unix");
+    system(" netstat -pa --unix 2>/dev/null| sed -n '/^Active UNIX/,/^Proto/p;/a.out/p'");
 
     close(unix_skt);
     unlink(unix_pth);
