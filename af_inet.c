@@ -38,13 +38,13 @@ int main(){
     inet_addr.sin_family=AF_INET;
     inet_addr.sin_port=ntohs(9000);
     memcpy(&inet_addr.sin_addr.s_addr,IPno,4);
-    //inet_addr.sin_addr.s_addr=ntohl(INADDR_ANY);
+    //inet_addr.sin_addr.s_addr=ntohl(0x7f000001); // ipaddr==127.0.0.1
 
     int len_inet = sizeof(inet_addr);
 
     // now binding the addr to the socket.
 
-    int z=bind(sck_inet,(struct sock_addr *)&inet_addr,len_inet);
+    int z=bind(sck_inet,(struct sockaddr *)&inet_addr,len_inet);
 
     if(z==-1) bail("bind()");
 
