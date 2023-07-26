@@ -1,4 +1,4 @@
-/* this program captures incoming arp packet from a given interface,
+/* this program captures all arp packet from a given interface,
 and prints usefull fields from it*/
 
 #include <sys/socket.h>
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     u_int8_t src_mac[ETH_ALEN];
     int ifindex;
 
-    int fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
+    int fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (fd < 0)
         bail("socket()");
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     memset(&my_addr, 0, sizeof(my_addr));
     my_addr.sll_family = AF_PACKET;
     my_addr.sll_ifindex = ifindex;
-    my_addr.sll_protocol = htons(ETH_P_ARP);
+    my_addr.sll_protocol = htons(ETH_P_ALL);
 
     // binding address with socket.
     if (bind(fd, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0)
@@ -86,35 +86,33 @@ int main(int argc, char **argv)
         struct ethhdr *frame = (struct ethhdr *)recvbuf;
         arp_pkt *arp = (arp_pkt *)(recvbuf + ETH_HLEN);
 
-        if (ntohs(frame->h_proto) != ETH_P_ARP)
+        if(ntohs(frame->h_proto) == ETH_P_ARP)
         {
-            printf("Not an ARP packet\n");
-            continue;
+            printf("\n%d bytes recieved\n", len);
+
+            printf("/*--- Ethernet ---*/\n");
+            printf("src mac: ");
+            print_mac(frame->h_source);
+            printf("dst mac: ");
+            print_mac(frame->h_dest);
+
+            // getting information from arp pkt.
+            printf("/*--- ARP ---*/\n");
+            printf("arp opcode: %d\n",ntohs(arp->opcode));
+            struct in_addr ip_adr;
+            memset(&ip_adr, 0, sizeof(struct in_addr));
+            ip_adr.s_addr = arp->src_ip;
+            printf("src IP: %s, ", inet_ntoa(ip_adr));
+            printf("src mac: ");
+            print_mac(arp->src_mac);
+            ip_adr.s_addr = arp->dst_ip;
+            printf("dst IP: %s, ", inet_ntoa(ip_adr));
+            printf("dst mac: ");
+            print_mac(arp->dst_mac);
+
+            printf("------------------------------\n");
+
         }
-
-        printf("\n%d bytes recieved\n", len);
-
-        printf("/*--- Ethernet ---*/\n");
-        printf("src mac: ");
-        print_mac(frame->h_source);
-        printf("dst mac: ");
-        print_mac(frame->h_dest);
-
-        // getting information from arp pkt.
-        printf("/*--- ARP ---*/\n");
-        printf("arp opcode: %d\n",ntohs(arp->opcode));
-        struct in_addr ip_adr;
-        memset(&ip_adr, 0, sizeof(struct in_addr));
-        ip_adr.s_addr = arp->src_ip;
-        printf("src IP: %s, ", inet_ntoa(ip_adr));
-        printf("src mac: ");
-        print_mac(arp->src_mac);
-        ip_adr.s_addr = arp->dst_ip;
-        printf("dst IP: %s, ", inet_ntoa(ip_adr));
-        printf("dst mac: ");
-        print_mac(arp->dst_mac);
-
-        printf("------------------------------\n");
     }
 
     close(fd);
